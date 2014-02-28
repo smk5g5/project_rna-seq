@@ -46,16 +46,15 @@ foreach my $read(@samples){
 my ($trimfq) = grep/$hash{$read}/,glob("*.fq");
 system "tophat  --bowtie1 -G $gtf_file  -o $hash{$read} -p 4 $bowtie_index $trimfq 1>>$hash{'directory'}.log.txt 2>&1";
 chdir($hash{$read});
-# system "mv accepted_hits.bam $hash{$read}.bam 1>>$hash{'directory'}.log.txt 2>&1";
 print $outfile "printing flagstat for all reads bam file\n";
-system "samtools flagstat accepted_hits.bam 1>>$hash{'directory'}.log.txt 2>&1";
+exec "samtools flagstat accepted_hits.bam 1>>$hash{'directory'}.log.txt 2>&1";
 my $header = "header_".$hash{$read};
-system "samtools  view -H accepted_hits.bam >$header 1>>$hash{'directory'}.log.txt 2>&1";
+exec "samtools  view -H accepted_hits.bam >$header 1>>$hash{'directory'}.log.txt 2>&1";
 #samtools view ./GSM915327_ILLUMINA/PAIRED/SRR486242/accepted_hits.bam|grep  NH:i:1 > uniq_GSM915327.bam"
 my $bam = "$hash{$read}"."_unique.bam";
-`samtools view accepted_hits.bam | grep NH:i:1 | cat $header - | samtools view -Sb - > $bam 1>>$hash{'directory'}.log.txt 2>&1`;
+exec "samtools view accepted_hits.bam | grep NH:i:1 | cat $header - | samtools view -Sb - > $bam 1>>$hash{'directory'}.log.txt 2>&1";
 print $outfile "printing flagstat for unique reads bam file\n";
-`samtools flagstat $bam 1>>$hash{'directory'}.log.txt 2>&1`; 
+exec "samtools flagstat $bam 1>>$hash{'directory'}.log.txt 2>&1"; 
 # system "rm $sam";
 # system "mv $bam $hash{$read}.bam";
 chdir($parent_dir);
