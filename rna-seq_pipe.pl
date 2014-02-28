@@ -47,16 +47,20 @@ my ($trimfq) = grep/$hash{$read}/,glob("*.fq");
 system "tophat  --bowtie1 -G $gtf_file  -o $hash{$read} -p 4 $bowtie_index $trimfq 1>>$hash{'directory'}.log.txt 2>&1";
 chdir($hash{$read});
 print $outfile "printing flagstat for all reads bam file\n";
-exec "samtools flagstat accepted_hits.bam 1>>$hash{'directory'}.log.txt 2>&1";
+# exec 1>>$hash{'directory'}.log.txt 2>&1";
 my $header = "header_".$hash{$read};
-exec "samtools  view -H accepted_hits.bam >$header 1>>$hash{'directory'}.log.txt 2>&1";
-#samtools view ./GSM915327_ILLUMINA/PAIRED/SRR486242/accepted_hits.bam|grep  NH:i:1 > uniq_GSM915327.bam"
 my $bam = "$hash{$read}"."_unique.bam";
-exec "samtools view accepted_hits.bam | grep NH:i:1 | cat $header - | samtools view -Sb - > $bam 1>>$hash{'directory'}.log.txt 2>&1";
-print $outfile "printing flagstat for unique reads bam file\n";
-exec "samtools flagstat $bam 1>>$hash{'directory'}.log.txt 2>&1"; 
+open(my $out,">$hash{$read}.sh");
+print $out "samtools flagstat accepted_hits.bam\n";
+print $out "samtools  view -H accepted_hits.bam >$header\n";
+print $out "samtools view accepted_hits.bam |grep NH:i:1 | cat $header - | samtools view -Sb - > $bam\n";
+print $out "samtools flagstat $bam\n"; 
+close $out;
+system "chmod +x temp.sh";
+system "./temp.sh 1>>$read.log.txt 2>&1";
+system "rm temp.sh";
+print $outfile "$header\n";
 # system "rm $sam";
-# system "mv $bam $hash{$read}.bam";
 chdir($parent_dir);
 my $cufflinks_read = $hash{$read}."/$hash{$read}"."_unique.bam";
 $bam_files{$read} = $cufflinks_read;
@@ -71,9 +75,7 @@ system "cuffdiff --output-dir $output_dir $cuff_cmp -p 4 $bam_files{Sample_1_rep
 elsif($hash{'pipeline'} eq 'cuffdiff_only'){
 my %bam_files;
 foreach my $read(@samples){
-# print $read,"\n";
 my $cufflinks_read = $hash{$read}."/$hash{$read}"."_unique.bam";
-# print $cufflinks_read,"\n";
 $bam_files{$read} = $cufflinks_read;
 }
 my $output_dir = $hash{'Sample_1_name'}."_vs_".$hash{'Sample2_name'};
@@ -92,3 +94,8 @@ my($key,$value) = split/\s+/,$_;
 $hash{$key} = $value;
 }
 }
+
+# sub write_to_shell_n_run{
+
+
+# }
